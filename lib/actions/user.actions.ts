@@ -4,16 +4,16 @@ import { ID, Query } from "node-appwrite";
 import { createAdminClient, createSessionClient } from "../appwrite";
 import { cookies } from "next/headers";
 import { encryptId, extractCustomerIdFromUrl, parseStringify } from "../utils";
-// import {
-//   CountryCode,
-//   ProcessorTokenCreateRequest,
-//   ProcessorTokenCreateRequestProcessorEnum,
-//   Products,
-// } from "plaid";
+import {
+  CountryCode,
+  ProcessorTokenCreateRequest,
+  ProcessorTokenCreateRequestProcessorEnum,
+  Products,
+} from "plaid";
 
-// import { plaidClient } from "@/lib/plaid";
+import { plaidClient } from "@/lib/plaid";
 import { revalidatePath } from "next/cache";
-// import { addFundingSource, createDwollaCustomer } from "./dwolla.actions";
+import { addFundingSource, createDwollaCustomer } from "./dwolla.actions";
 
 const {
   APPWRITE_DATABASE_ID: DATABASE_ID,
@@ -24,6 +24,8 @@ const {
 export const getUserInfo = async ({ userId }: getUserInfoProps) => {
   try {
     const { database } = await createAdminClient();
+
+    console.log("userID in signin:", userId);
 
     const user = await database.listDocuments(
       DATABASE_ID!,
@@ -74,14 +76,14 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
 
     if (!newUserAccount) throw new Error("Error creating user");
 
-    // const dwollaCustomerUrl = await createDwollaCustomer({
-    //   ...userData,
-    //   type: "personal",
-    // });
+    const dwollaCustomerUrl = await createDwollaCustomer({
+      ...userData,
+      type: "personal",
+    });
 
-    // if (!dwollaCustomerUrl) throw new Error("Error creating Dwolla customer");
+    if (!dwollaCustomerUrl) throw new Error("Error creating Dwolla customer");
 
-    // const dwollaCustomerId = extractCustomerIdFromUrl(dwollaCustomerUrl);
+    const dwollaCustomerId = extractCustomerIdFromUrl(dwollaCustomerUrl);
 
     const newUser = await database.createDocument(
       DATABASE_ID!,
@@ -90,8 +92,8 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
       {
         ...userData,
         userId: newUserAccount.$id,
-        // dwollaCustomerId,
-        // dwollaCustomerUrl,
+        dwollaCustomerId,
+        dwollaCustomerUrl,
       }
     );
 
